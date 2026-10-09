@@ -6,7 +6,7 @@ app = FastAPI()
 @app.get("/")
 
 def info():
-    ran_num = random.randint(1, 10000)
+    ran_num = random.randint(1, 100)
     return ran_num
 
 
