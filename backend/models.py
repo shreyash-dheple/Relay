@@ -24,22 +24,29 @@ class Room:
     def add_player(self, player):                                 #here player.id is key and player is the value 
         self.players[player.id] = player
 
-    def next_turn(self):
-         x = list(self.players.keys())                             #this is next turn function inside Room class
-         print(x)
-             
+    def next_turn(self):                                           #this is next turn function inside Room class
+         x = list(self.players.keys())                             #x is a list of players in the Room
+         if self.current_turn is None:
+             self.current_turn = x[0]
+         else:
+             current_position = x.index(self.current_turn)                  #identifying the index of current player
+             next_position = (current_position + 1) % len(x)                #next position using modulo operator
+             self.current_turn = x[next_position]                            #assigning the next_position 
+
     
     
-room = Room("XY12")
-p1 = Player("Alex", 1) 
-p2 = Player("shreyash", 33)
-p3 = Player("prashant", 45)                                  #testing the logic 
-room.add_player(p1)
-room.add_player(p2)
-room.add_player(p3)
+# room = Room("XY12")
+# p1 = Player("Alex", 1) 
+# p2 = Player("shreyash", 33)
+# p3 = Player("prashant", 45) 
+# p4 = Player("Prem", 21)                                 #testing the logic 
+# room.add_player(p1)
+# room.add_player(p2)
+# room.add_player(p3)
+# room.add_player(p4)
 
 
-Room.next_turn(room)
+
 
 
 
