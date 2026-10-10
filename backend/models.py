@@ -29,21 +29,39 @@ class Room:
          if self.current_turn is None:
              self.current_turn = x[0]
          else:
-             current_position = x.index(self.current_turn)                  #identifying the index of current player
-             next_position = (current_position + 1) % len(x)                #next position using modulo operator
-             self.current_turn = x[next_position]                            #assigning the next_position 
+             current_position = x.index(self.current_turn)
+             for step in range(1, len(x) + 1):
+                 candidate_position = (current_position + step) % len(x)
+                 candidate_id = x[candidate_position]
+                 candidate_player = self.players[candidate_id]
+                 if candidate_player.is_alive:
+                       self.current_turn = candidate_id
+                       break
+     
+                        
+            
+        
+                  
+
+room = Room("XY12")
+p1 = Player("Alex", 1)
+p2 = Player("Sam", 2)
+p3 = Player("Jordan", 3)
+room.add_player(p1)
+room.add_player(p2)
+room.add_player(p3)
+
+room.next_turn()
+print(room.current_turn)   # expect 1
+
+p2.eliminate()              # Sam is out
+room.next_turn()
+print(room.current_turn)   # expect 3, skipping Sam (2)                                                                           
+          
+   
 
     
-    
-# room = Room("XY12")
-# p1 = Player("Alex", 1) 
-# p2 = Player("shreyash", 33)
-# p3 = Player("prashant", 45) 
-# p4 = Player("Prem", 21)                                 #testing the logic 
-# room.add_player(p1)
-# room.add_player(p2)
-# room.add_player(p3)
-# room.add_player(p4)
+
 
 
 
