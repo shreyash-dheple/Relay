@@ -1,3 +1,5 @@
+import random
+
 class Player:
    
     def __init__(self, name, player_id,):
@@ -41,6 +43,13 @@ class Room:
         """Return True if word starts with the room's current letters (case-insensitive)."""
         return word.lower().startswith(self.current_letters.lower())
 
+    def start_round(self, words):
+        word_list = list(words)
+        current_word = random.choice(word_list)
+        self.current_letters = pick_letters(current_word)
+
+
+     
 def load_word(filename):
         """Load words from filename into a set of lowercase words."""
         words = set()
@@ -51,9 +60,20 @@ def load_word(filename):
         return words
 
 
-word_set = load_word("words.txt")
-print(len(word_set))
-print("cat" in word_set)
+def pick_letters(word):
+    """Decide how many starting letters to reveal based on word length."""
+    if len(word) <= 4:
+        n = 2
+    elif len(word) <= 7:
+        n = 3
+    else:
+        n = 4
+    return word[0:n]
+
+words = load_word("words.txt")
+room = Room("XY12")
+room.start_round(words)
+print(room.current_letters)
 
         
             
