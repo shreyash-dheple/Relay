@@ -41,10 +41,23 @@ class Room:
         """Return True if word starts with the room's current letters (case-insensitive)."""
         return word.lower().startswith(self.current_letters.lower())
 
-room = Room('ABDJ')
-room.current_letters = "c"
-print(room.check_word("cat"))   # expect True
-print(room.check_word("dog"))   # expect False
+def load_word(filename):
+        """Load words from filename into a set of lowercase words."""
+        words = set()
+        with open(filename, "r") as file:
+            for line in file:
+                word = line.strip().lower()
+                words.add(word)
+        return words
+
+
+word_set = load_word("words.txt")
+print(len(word_set))
+print("cat" in word_set)
+
+        
+            
+   
 
 
 
