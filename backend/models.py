@@ -37,26 +37,21 @@ class Room:
                  if candidate_player.is_alive:
                        self.current_turn = candidate_id
                        break
-     
-                        
+    def check_word(self, word):
+        """Return True if word starts with the room's current letters (case-insensitive)."""
+        return word.lower().startswith(self.current_letters.lower())
+
+room = Room('ABDJ')
+room.current_letters = "c"
+print(room.check_word("cat"))   # expect True
+print(room.check_word("dog"))   # expect False
+
+
+
             
         
                   
-
-room = Room("XY12")
-p1 = Player("Alex", 1)
-p2 = Player("Sam", 2)
-p3 = Player("Jordan", 3)
-room.add_player(p1)
-room.add_player(p2)
-room.add_player(p3)
-
-room.next_turn()
-print(room.current_turn)   # expect 1
-
-p2.eliminate()              # Sam is out
-room.next_turn()
-print(room.current_turn)   # expect 3, skipping Sam (2)                                                                           
+                                                                 
           
    
 
@@ -72,3 +67,5 @@ print(room.current_turn)   # expect 3, skipping Sam (2)
 
 
      
+
+# %%
