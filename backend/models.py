@@ -7,7 +7,6 @@ class Player:
         self.id = player_id
         self.is_alive = True
 
-
     def eliminate(self):
         self.is_alive = False
 
@@ -25,8 +24,10 @@ class Room:
         self.words = set()
         self.used_words = set()
 
+
     def add_player(self, player):                                 #here player.id is key and player is the value 
         self.players[player.id] = player
+
 
     def next_turn(self):                                           #this is next turn function inside Room class
          x = list(self.players.keys())                             #x is a list of players in the Room
@@ -41,10 +42,13 @@ class Room:
                  if candidate_player.is_alive:
                        self.current_turn = candidate_id
                        break
+
+                 
     def check_word(self, word):
         word = word.lower()
         """Return True if word starts with the room's current letters (case-insensitive)."""
         return word.startswith(self.current_letters.lower()) and word in self.words and word not in self.used_words
+
 
     def start_round(self, words):
         self.words = words
@@ -54,7 +58,16 @@ class Room:
         self.used_words = set()
 
 
-     
+    def submit_word(self, word):
+        if self.check_word(word):                               #the self.check_word() returns Boolean 
+            self.used_words.add(word)
+            self.next_turn()
+        else:
+            current_player = self.players[self.current_turn]
+            current_player.eliminate()
+            self.next_turn()
+            
+
 def load_word(filename):
         """Load words from filename into a set of lowercase words."""
         words = set()
@@ -74,34 +87,3 @@ def pick_letters(word):
     else:
         n = 4
     return word[0:n]
-
-
-
-
-        
-            
-   
-
-
-
-            
-        
-                  
-                                                                 
-          
-   
-
-    
-
-
-
-
-
-
-
-        
-
-
-     
-
-# %%
