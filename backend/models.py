@@ -22,6 +22,8 @@ class Room:
         self.current_turn = None
         self.is_started = False
         self.is_over = False
+        self.words = set()
+        self.used_words = set()
 
     def add_player(self, player):                                 #here player.id is key and player is the value 
         self.players[player.id] = player
@@ -40,13 +42,16 @@ class Room:
                        self.current_turn = candidate_id
                        break
     def check_word(self, word):
+        word = word.lower()
         """Return True if word starts with the room's current letters (case-insensitive)."""
-        return word.lower().startswith(self.current_letters.lower())
+        return word.startswith(self.current_letters.lower()) and word in self.words and word not in self.used_words
 
     def start_round(self, words):
+        self.words = words
         word_list = list(words)
         current_word = random.choice(word_list)
         self.current_letters = pick_letters(current_word)
+        self.used_words = set()
 
 
      
@@ -70,10 +75,8 @@ def pick_letters(word):
         n = 4
     return word[0:n]
 
-words = load_word("words.txt")
-room = Room("XY12")
-room.start_round(words)
-print(room.current_letters)
+
+
 
         
             
