@@ -66,8 +66,24 @@ class Room:
             current_player = self.players[self.current_turn]
             current_player.eliminate()
             self.next_turn()
-            
 
+            
+    def is_game_over(self):
+        count = 0
+        for p in self.players.values():
+            if p.is_alive:                                      #as self.is_alive is assigned as False at start not a funntion
+                count += 1
+            return count <= 1
+
+
+    def get_winner(self):
+        alive_players = []
+        for p in self.players.values():
+            if p.is_alive:
+                alive_players.append(p)
+        return alive_players[0]
+
+#below are standalone functions
 def load_word(filename):
         """Load words from filename into a set of lowercase words."""
         words = set()
@@ -87,3 +103,5 @@ def pick_letters(word):
     else:
         n = 4
     return word[0:n]
+
+
