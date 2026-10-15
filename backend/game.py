@@ -22,6 +22,7 @@ class Room:
         self.is_started = False
         self.is_over = False
         self.words = set()
+        self.valid_words = set()
         self.used_words = set()
 
 
@@ -47,7 +48,7 @@ class Room:
     def check_word(self, word):
         word = word.lower()
         """Return True if word starts with the room's current letters (case-insensitive)."""
-        return word.startswith(self.current_letters.lower()) and word in self.words and word not in self.used_words
+        return word.startswith(self.current_letters.lower()) and word in self.valid_words and word not in self.used_words
 
 
     def start_round(self, words):
