@@ -23,7 +23,7 @@ A real-time multiplayer word game. Create a room, share the code, and outlast ev
 
 ## Tech Stack
 
-- Backend: Python, FastAPI, Uvicorn
+- Backend: Python, FastAPI, Uvicorn WebServer
 - Frontend: HTML, CSS, JavaScript
 
 ## Contributing
