@@ -92,7 +92,7 @@ def join_room(room_code: str, body: NameRequest):
 
     if room.is_started:
         raise HTTPException(status_code=400, detail="Game already started")
-    if body.names in [p.name for p in room.players.values()]:
+    if body.name in [p.name for p in room.players.values()]:
             raise HTTPException(status_code=404, detail="Name already taken")
     
 
