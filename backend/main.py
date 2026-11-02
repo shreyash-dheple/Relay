@@ -41,3 +41,18 @@ def get_room(room_code: str):
     room = rooms[room_code]
     names = [p.name for p in room.players.values()]
     return {"room_code": room_code, "players": names}
+
+@app.post("/rooms/{room_code}/join")
+def join_room(room_code: str, body: NameRequest):
+    if room_code not in rooms:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    room = rooms[room_code]
+
+    if room.is_started:
+        raise HTTPException(status_code=400, detail="Game already started")
+
+    player_id = uuid.uuid4().hex[:8]
+    room.add_player(Player(body.name, player_id))
+
+    return {"room_code": room_code, "player_id": player_id}
