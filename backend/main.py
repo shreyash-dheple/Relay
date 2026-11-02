@@ -16,7 +16,7 @@ valid_words = load_word("words_alpha.txt")
 #This is a class to manage Websocket connections for each room.
 class ConnectionManager:
     def __init__(self):
-        self.connections = {}   # room_code -> {player_id: websocket}
+        self.connections = {}
 
     def add(self, room_code, player_id, websocket):
         self.connections.setdefault(room_code, {})[player_id] = websocket
@@ -27,7 +27,31 @@ class ConnectionManager:
 
     async def broadcast(self, room_code, message):
         for ws in list(self.connections.get(room_code, {}).values()):
-            await ws.send_text(message)
+            await ws.send_json(message)
+
+#funnction to build the state of the room to send to frontend. 
+def build_state(room):
+    players = [
+        {"name": p.name, "is_alive": p.is_alive}
+        for p in room.players.values()
+    ]
+    current = None
+    if room.current_turn is not None:
+        current = room.players[room.current_turn].name
+
+    winner = None
+    if room.is_over:
+        winner = room.get_winner().name
+
+    return {
+        "type": "state",
+        "players": players,
+        "is_started": room.is_started,
+        "is_over": room.is_over,
+        "current_turn": current,
+        "letters": room.current_letters,
+        "winner": winner,
+    }
 
 manager = ConnectionManager()
 
@@ -42,15 +66,32 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, player_id: st
     await websocket.accept()
     manager.add(room_code, player_id, websocket)
     name = room.players[player_id].name
-    await manager.broadcast(room_code, f"{name} joined")
+    await manager.broadcast(room_code, build_state(room))
 
     try:
         while True:
-            text = await websocket.receive_text()
-            await manager.broadcast(room_code, f"{name}: {text}")
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+
+            if msg_type == "start":
+                is_host = player_id == next(iter(room.players))
+                if is_host and not room.is_started and len(room.players) >= 2:
+                    room.is_started = True
+                    room.next_turn()
+                    room.start_round(prompt_words)
+
+            elif msg_type == "submit_word":
+                if room.is_started and not room.is_over and room.current_turn == player_id:
+                    room.submit_word(str(data.get("word", "")))
+                    if room.is_game_over():
+                        room.is_over = True
+                    else:
+                        room.start_round(prompt_words)
+
+            await manager.broadcast(room_code, build_state(room))
     except WebSocketDisconnect:
         manager.remove(room_code, player_id)
-        await manager.broadcast(room_code, f"{name} left")
+        await manager.broadcast(room_code, build_state(room))
 
 class NameRequest(BaseModel):
     name: str          
