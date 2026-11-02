@@ -32,3 +32,12 @@ def create_room(body: NameRequest):
 
     
     return {"room_code": code, "player_id": player_id}
+
+@app.get("/rooms/{room_code}")
+def get_room(room_code: str):
+    if room_code not in rooms:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    room = rooms[room_code]
+    names = [p.name for p in room.players.values()]
+    return {"room_code": room_code, "players": names}
