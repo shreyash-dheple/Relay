@@ -1,13 +1,34 @@
-from fastapi import FastAPI
+from game import Player, Room , load_word
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import random
+import string
+import uuid
 
 app = FastAPI()
 
-@app.get("/")
+rooms = {}
+prompt_words = load_word("words.txt")
+valid_words = load_word("words_alpha.txt")
 
-def info():
-    ran_num = random.randint(1, 100)
-    return ran_num
+class NameRequest(BaseModel):
+    name: str          
 
+@app.post("/rooms")
+def create_room(body: NameRequest):
+    code = "".join(random.choices(string.ascii_uppercase, k=5))
+    while code in rooms:
+        code = "".join(random.choices(string.ascii_uppercase, k=5)) 
 
- 
+    
+    room = Room(code)                    
+    room.valid_words = valid_words  
+    rooms[code] = room
+
+    
+    player_id = uuid.uuid4().hex[:8]                    
+    player = Player(body.name, player_id) 
+    room.add_player(player)
+
+    
+    return {"room_code": code, "player_id": player_id}
