@@ -5,8 +5,50 @@ from pydantic import BaseModel
 import random
 import string
 import uuid
+import asyncio
+import time
 
 app = FastAPI()
+
+#this is the time limit for each player's turn in seconds
+TURN_SECONDS = 30
+timers = {}      # room_code -> the running timer task
+deadlines = {}   # room_code -> when the current turn runs out
+
+#function to handle the turn timer for a room. It waits for the turn duration and then
+#  automatically submits an empty word if the player hasn't submitted one
+def cancel_timer(room_code):
+    task = timers.pop(room_code, None)
+    if task:
+        task.cancel()
+    deadlines.pop(room_code, None)
+
+def start_timer(room):
+    cancel_timer(room.room_code)
+    deadlines[room.room_code] = time.monotonic() + TURN_SECONDS
+    timers[room.room_code] = asyncio.create_task(
+        turn_timer(room.room_code, room.current_turn)
+    )
+
+#function to process a submitted word for a room. It submits the word, checks 
+# if the game is over, and either ends the game or starts a new round.
+def process_word(room, word):
+    room.submit_word(word)
+    if room.is_game_over():
+        room.is_over = True
+        cancel_timer(room.room_code)
+    else:
+        room.start_round(prompt_words)
+        start_timer(room)
+
+async def turn_timer(room_code, turn_id):
+    await asyncio.sleep(TURN_SECONDS)
+    timers.pop(room_code, None)          # remove myself first
+    room = rooms.get(room_code)
+    if room is None or room.is_over or room.current_turn != turn_id:
+        return
+    process_word(room, "")               # empty word = fail = eliminated
+    await manager.broadcast(room_code, build_state(room))
 
 rooms = {}
 prompt_words = load_word("words.txt")
@@ -43,6 +85,13 @@ def build_state(room):
     if room.is_over:
         winner = room.get_winner().name
 
+    seconds_left = None                                  #for the frontend to display a countdown timer for the current turn
+    if room.room_code in deadlines:
+        seconds_left = max(0, round(deadlines[room.room_code] - time.monotonic(), 1))
+
+
+    host = next(iter(room.players.values())).name        #for the frontend to display who is the host of the room
+
     return {
         "type": "state",
         "players": players,
@@ -51,6 +100,8 @@ def build_state(room):
         "current_turn": current,
         "letters": room.current_letters,
         "winner": winner,
+        "seconds_left": seconds_left,                    
+        "host": host,   
     }
 
 manager = ConnectionManager()
@@ -79,14 +130,11 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, player_id: st
                     room.is_started = True
                     room.next_turn()
                     room.start_round(prompt_words)
+                    start_timer(room)            #start the turn timer for the first player
 
             elif msg_type == "submit_word":
                 if room.is_started and not room.is_over and room.current_turn == player_id:
-                    room.submit_word(str(data.get("word", "")))
-                    if room.is_game_over():
-                        room.is_over = True
-                    else:
-                        room.start_round(prompt_words)
+                    process_word(room, str(data.get("word", "")))      #process the submitted word and start a new turn or end the game
 
             await manager.broadcast(room_code, build_state(room))
     except WebSocketDisconnect:
