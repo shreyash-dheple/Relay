@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
 let ws = null, myName = "", countdownEnd = null, turnTotal = 10, session = null, retries = 0;
+let lastMsg = Date.now();
 
 async function enter(path, nameId) {
   const name = $(nameId).value.trim();
@@ -37,16 +38,12 @@ async function enter(path, nameId) {
     $("game-view").classList.remove("hidden");
     $("room-code").textContent = code;
   };
-  ws.onmessage = (e) => render(JSON.parse(e.data));
-  ws.onclose = () => {
-    if (!session) return;
-    if (!opened && ++retries >= 8) { leaveRoom("Could not rejoin that room."); return; }
-    $("status").textContent = "Connection lost. Reconnecting…";
-    $("word").disabled = true;
-    $("submit-btn").disabled = true;
-    countdownEnd = null;
-    setTimeout(reconnect, 2000);
-  };
+     ws.onmessage = (e) => {
+     lastMsg = Date.now();
+     const data = JSON.parse(e.data);
+     if (data.type === "pong") { $("ping").textContent = `${Date.now() - data.t} ms`; return; }
+     render(data);
+   };
 }
 
    async function reconnect() {
@@ -76,7 +73,8 @@ function render(s) {
   for (const p of s.players) {
     const chip = document.createElement("span");
     chip.className = "chip";
-    chip.textContent = p.name + (p.name === myName ? " (you)" : "");
+    const hearts = "❤️".repeat(p.lives) + "🖤".repeat(s.max_lives - p.lives);              // Display hearts based on lives
+    chip.textContent = p.name + (p.name === myName ? " (you)" : "") + " " + hearts;
     if (!p.is_alive) chip.classList.add("dead");
     if (s.is_started && !s.is_over && p.name === s.current_turn) chip.classList.add("turn");
     list.appendChild(chip);
@@ -126,7 +124,10 @@ function render(s) {
      if (ev.ok) text = `${who}: ${ev.word} ✓`;
      else if (ev.reason === "left the game") text = `${who} left the game`;
      else if (!ev.word) text = `${who} ran out of time, out!`;
-     else text = `${who} typed ${ev.word}: ${ev.reason}, out!`;
+        else {
+     const what = !ev.word ? "ran out of time" : `typed ${ev.word}: ${ev.reason}`;
+     text = ev.out ? `${who} ${what}, out!` : `${who} ${what}, lost a life (${"❤️".repeat(ev.lives)} left)`;
+   }
      const row = document.createElement("div");
      row.className = "event " + (ev.ok ? "ok" : "bad");
      row.textContent = text;
@@ -167,6 +168,16 @@ $("home-btn").onclick = () => {
      }
      leaveRoom("");
    };
+
+   setInterval(() => {
+     if (!ws || ws.readyState !== WebSocket.OPEN) return;
+     if (Date.now() - lastMsg > 30000) { reconnect(); return; }   // silent connection, rejoin
+     ws.send(JSON.stringify({ type: "ping", t: Date.now() }));
+   }, 10000);
+
+   document.addEventListener("visibilitychange", () => {
+     if (document.visibilityState === "visible" && session && (!ws || ws.readyState !== WebSocket.OPEN)) reconnect();
+   });
 
 try {
      const saved = JSON.parse(localStorage.getItem("relay_session"));
