@@ -50,7 +50,7 @@ def start_timer(room):
 #function to process a submitted word for a room. It submits the word, checks 
 # if the game is over, and either ends the game or starts a new round.
 def process_word(room, word):
-    room.submit_word(word)
+    room.events.append(room.submit_word(word))
     if room.is_game_over():
         room.is_over = True
         cancel_timer(room.room_code)
@@ -79,13 +79,17 @@ class ConnectionManager:
     def add(self, room_code, player_id, websocket):
         self.connections.setdefault(room_code, {})[player_id] = websocket
 
-    def remove(self, room_code, player_id):
-        room_conns = self.connections.get(room_code, {})
-        room_conns.pop(player_id, None)
+    def remove(self, room_code, player_id, websocket):
+       room_conns = self.connections.get(room_code, {})
+       if room_conns.get(player_id) is websocket:   # only remove the same connection
+           room_conns.pop(player_id, None)
 
     async def broadcast(self, room_code, message):
-        for ws in list(self.connections.get(room_code, {}).values()):
-            await ws.send_json(message)
+       for ws in list(self.connections.get(room_code, {}).values()):
+           try:
+               await ws.send_json(message)
+           except Exception:
+               pass                                  # skip dead connections
 
 #funnction to build the state of the room to send to frontend. 
 def build_state(room):
@@ -117,7 +121,8 @@ def build_state(room):
         "letters": room.current_letters,
         "winner": winner,
         "seconds_left": seconds_left,                    
-        "host": host,   
+        "host": host,
+        "events": room.events[-8:],                  #only send the last 8 events to the frontend to avoid sending too much data
     }
 
 manager = ConnectionManager()
@@ -151,10 +156,45 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, player_id: st
             elif msg_type == "submit_word":
                 if room.is_started and not room.is_over and room.current_turn == player_id:
                     process_word(room, str(data.get("word", "")))      #process the submitted word and start a new turn or end the game
+            elif msg_type == "restart":
+                if room.is_over:
+                    cancel_timer(room_code)
+                    for pid in [pid for pid, p in room.players.items() if p.left]:
+                        room.players.pop(pid)
+                    room.reset()
+                    if len(room.players) >= 2:
+                        room.is_started = True
+                        room.next_turn()
+                        room.start_round(prompt_words)
+                        start_timer(room)
 
+            elif msg_type == "leave":
+                manager.remove(room_code, player_id, websocket)
+                player = room.players[player_id]
+                player.left = True
+                left_event = {"player": player.name, "word": "", "ok": False, "reason": "left the game"}
+                if not room.is_started:
+                    room.players.pop(player_id)
+            elif not room.is_over:
+                    if room.current_turn == player_id:
+                        process_word(room, "")          # counts as a miss
+                        room.events[-1] = left_event    # show "left the game" instead of "ran out of time"
+                    else:
+                        player.eliminate()
+                        room.events.append(left_event)
+                        if room.is_game_over():
+                            room.is_over = True
+                            cancel_timer(room_code)
+            if all(p.left for p in room.players.values()):
+                    cancel_timer(room_code)
+                    rooms.pop(room_code, None)          # everyone left, delete room
+            else:
+                    await manager.broadcast(room_code, build_state(room))
+            await websocket.close()
+            return
             await manager.broadcast(room_code, build_state(room))
     except WebSocketDisconnect:
-        manager.remove(room_code, player_id)
+        manager.remove(room_code, player_id, websocket)
         await manager.broadcast(room_code, build_state(room))
 
 class NameRequest(BaseModel):

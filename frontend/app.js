@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-let ws = null, myName = "", countdownEnd = null, turnTotal = 10;
+let ws = null, myName = "", countdownEnd = null, turnTotal = 10, session = null, retries = 0;
 
 async function enter(path, nameId) {
   const name = $(nameId).value.trim();
@@ -17,32 +17,55 @@ async function enter(path, nameId) {
       return;
     }
     myName = name;
+    localStorage.setItem("relay_session", JSON.stringify({ code: data.room_code, playerId: data.player_id, name }));
     connect(data.room_code, data.player_id);
   } catch (err) {
     $("error").textContent = "Could not reach the server.";
   }
 }
 
-function connect(code, playerId) {
+  function connect(code, playerId) {
+  if (ws) { ws.onclose = null; ws.close(); }
+  session = { code, playerId };
+  let opened = false;
   const proto = location.protocol === "https:" ? "wss" : "ws";
   ws = new WebSocket(`${proto}://${location.host}/ws/${code}/${playerId}`);
   ws.onopen = () => {
+    opened = true;
+    retries = 0;
     $("join-view").classList.add("hidden");
     $("game-view").classList.remove("hidden");
     $("room-code").textContent = code;
   };
   ws.onmessage = (e) => render(JSON.parse(e.data));
   ws.onclose = () => {
-    if ($("game-view").classList.contains("hidden")) {
-      $("error").textContent = "Could not connect to that room.";
-    } else {
-      $("status").textContent = "Connection lost. Refresh the page to rejoin.";
-      $("word").disabled = true;
-      $("submit-btn").disabled = true;
-      countdownEnd = null;
-    }
+    if (!session) return;
+    if (!opened && ++retries >= 8) { leaveRoom("Could not rejoin that room."); return; }
+    $("status").textContent = "Connection lost. Reconnecting…";
+    $("word").disabled = true;
+    $("submit-btn").disabled = true;
+    countdownEnd = null;
+    setTimeout(reconnect, 2000);
   };
 }
+
+   async function reconnect() {
+     if (!session) return;
+     try {
+       const res = await fetch(`/rooms/${encodeURIComponent(session.code)}`);
+       if (res.status === 404) { leaveRoom("That room no longer exists."); return; }
+     } catch (err) { /* server not reachable yet, try again below */ }
+     connect(session.code, session.playerId);
+   }
+
+   function leaveRoom(msg) {
+     retries = 0;
+     session = null;
+     localStorage.removeItem("relay_session");
+     $("game-view").classList.add("hidden");
+     $("join-view").classList.remove("hidden");
+     $("error").textContent = msg;
+   }
 
 function render(s) {
   const mine = s.current_turn === myName;
@@ -71,6 +94,7 @@ function render(s) {
   }
 
   $("start-btn").classList.toggle("hidden", s.is_started || s.host !== myName);
+  $("restart-btn").classList.toggle("hidden", !s.is_over);
   $("banner").classList.toggle("hidden", !s.is_over);
   if (s.is_over) $("banner").textContent = s.winner === myName ? "You win!" : `${s.winner} wins!`;
 
@@ -94,6 +118,20 @@ function render(s) {
     turnTotal = Math.max(10, s.seconds_left);
     countdownEnd = performance.now() + s.seconds_left * 1000;
   }
+  const feed = $("feed");
+  feed.replaceChildren();
+  for (const ev of [...s.events].reverse()) {
+     const who = ev.player === myName ? "You" : ev.player;
+     let text;
+     if (ev.ok) text = `${who}: ${ev.word} ✓`;
+     else if (ev.reason === "left the game") text = `${who} left the game`;
+     else if (!ev.word) text = `${who} ran out of time, out!`;
+     else text = `${who} typed ${ev.word}: ${ev.reason}, out!`;
+     const row = document.createElement("div");
+     row.className = "event " + (ev.ok ? "ok" : "bad");
+     row.textContent = text;
+     feed.appendChild(row);
+   }
 }
 
 setInterval(() => {
@@ -120,3 +158,21 @@ $("join-btn").onclick = () => {
 $("start-btn").onclick = () => ws.send(JSON.stringify({ type: "start" }));
 $("submit-btn").onclick = submitWord;
 $("word").addEventListener("keydown", (e) => { if (e.key === "Enter") submitWord(); })
+
+$("restart-btn").onclick = () => ws.send(JSON.stringify({ type: "restart" }));
+$("home-btn").onclick = () => {
+     if (ws) {
+       ws.onclose = null;
+       if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "leave" }));
+     }
+     leaveRoom("");
+   };
+
+try {
+     const saved = JSON.parse(localStorage.getItem("relay_session"));
+     if (saved) {
+       myName = saved.name;
+       session = { code: saved.code, playerId: saved.playerId };
+       reconnect();
+     }
+   } catch (err) {}

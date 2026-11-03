@@ -6,6 +6,7 @@ class Player:
         self.name = name
         self.id = player_id
         self.is_alive = True
+        self.left = False
 
     def eliminate(self):
         self.is_alive = False
@@ -24,6 +25,7 @@ class Room:
         self.words = set()
         self.valid_words = set()
         self.used_words = set()
+        self.events = []
 
 
     def add_player(self, player):                                 #here player.id is key and player is the value 
@@ -46,9 +48,15 @@ class Room:
 
                  
     def check_word(self, word):
-        word = word.lower()
-        """Return True if word starts with the room's current letters (case-insensitive)."""
-        return word.startswith(self.current_letters.lower()) and word in self.valid_words and word not in self.used_words
+       if word == "":
+           return "ran out of time"
+       if not word.startswith(self.current_letters.lower()):
+           return f"doesn't start with {self.current_letters.upper()}"
+       if word not in self.valid_words:
+           return "not a valid word"
+       if word in self.used_words:
+           return "already used"
+       return None
 
 
     def start_round(self, words):
@@ -56,17 +64,28 @@ class Room:
         word_list = list(words)
         current_word = random.choice(word_list)
         self.current_letters = pick_letters(current_word)
-        self.used_words = set()
-
+        
 
     def submit_word(self, word):
-        if self.check_word(word):                               #the self.check_word() returns Boolean 
-            self.used_words.add(word)
-            self.next_turn()
-        else:
-            current_player = self.players[self.current_turn]
-            current_player.eliminate()
-            self.next_turn()
+       word = word.strip().lower()
+       player = self.players[self.current_turn]
+       reason = self.check_word(word)
+       if reason is None:
+           self.used_words.add(word)
+       else:
+           player.eliminate()
+       self.next_turn()
+       return {"player": player.name, "word": word, "ok": reason is None, "reason": reason}
+
+    def reset(self):
+       for p in self.players.values():
+           p.is_alive = True
+       self.is_started = False
+       self.is_over = False
+       self.current_turn = None
+       self.current_letters = None
+       self.used_words = set()
+       self.events = []
 
             
     def is_game_over(self):

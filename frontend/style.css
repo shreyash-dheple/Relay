@@ -33,3 +33,8 @@
   #bar.low div { background: var(--coral); }
   #timer { font-size: 26px; margin: 8px 0 4px; min-height: 1.3em; }
   #banner { font: 700 30px Georgia, serif; color: var(--gold); margin-bottom: 8px; }
+
+#feed { margin-top: 12px; text-align: left; }
+.event { padding: 4px 0; font-size: 0.95rem; }
+.event.ok { color: #7ddc8a; }
+.event.bad { color: #ff7b7b; }
