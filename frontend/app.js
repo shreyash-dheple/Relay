@@ -1,8 +1,8 @@
 const $ = (id) => document.getElementById(id);
 let ws = null, myName = "", countdownEnd = null, turnTotal = 10;
 
-async function enter(path) {
-  const name = $("name").value.trim();
+async function enter(path, nameId) {
+  const name = $(nameId).value.trim();
   $("error").textContent = "";
   if (!name) { $("error").textContent = "Enter your name first."; return; }
   try {
@@ -111,11 +111,11 @@ function submitWord() {
   $("word").value = "";
 }
 
-$("create-btn").onclick = () => enter("/rooms");
+$("create-btn").onclick = () => enter("/rooms", "create-name");
 $("join-btn").onclick = () => {
   const code = $("code").value.trim().toUpperCase();
   if (!code) { $("error").textContent = "Enter a room code."; return; }
-  enter(`/rooms/${encodeURIComponent(code)}/join`);
+  enter(`/rooms/${encodeURIComponent(code)}/join`, "join-name");
 };
 $("start-btn").onclick = () => ws.send(JSON.stringify({ type: "start" }));
 $("submit-btn").onclick = submitWord;
