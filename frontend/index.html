@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay</title>
+   <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main>
+  <h1>Relay</h1>
+  <p class="muted">Type a word that starts with the letters before time runs out. Miss, and you are out.</p>
+
+ <section id="join-view">
+  <div class="panel">
+    <h2>Create a room</h2>
+    <input id="create-name" placeholder="Your name" maxlength="20" autocomplete="off">
+    <button id="create-btn">Create room</button>
+  </div>
+
+  <p class="muted">or</p>
+
+  <div class="panel">
+    <h2>Join a room</h2>
+    <input id="join-name" placeholder="Your name" maxlength="20" autocomplete="off">
+    <input id="code" placeholder="Room code" maxlength="4" autocomplete="off">
+    <button id="join-btn" class="ghost">Join room</button>
+  </div>
+
+  <div id="error" class="error"></div>
+</section>
+
+  <section id="game-view" class="hidden">
+    <div class="muted" style="margin-top:20px">Room code: <strong id="room-code" style="color:var(--chalk)"></strong></div>
+    <div id="players"></div>
+
+    <div id="table">
+      <div id="banner" class="hidden"></div>
+      <div id="status"></div>
+      <div id="letters"></div>
+      <div id="bar"><div></div></div>
+      <div id="timer"></div>
+      <button id="start-btn" class="hidden">Start game</button>
+      <input id="word" placeholder="Your word" autocomplete="off" disabled>
+      <button id="submit-btn" disabled>Play word</button>
+    </div>
+  </section>
+</main>
+
+   <script src="/static/app.js"></script>
+</body>
+</html>
