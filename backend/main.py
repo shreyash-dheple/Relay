@@ -16,6 +16,13 @@ app = FastAPI()
 # This is the path to the frontend directory, which contains the HTML, CSS, and JavaScript files for the game
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 
+#absoulute path to the directory containing this file. for deployment, this will be the path to the backend directory on the server
+BASE = Path(__file__).resolve().parent
+
+print(BASE, (BASE / "words.txt").exists(), (BASE / "words_alpha.txt").exists())
+
+prompt_words = load_word(BASE /"words.txt")
+valid_words = load_word(BASE / "words_alpha.txt")
 @app.get("/")
 def home():
     return FileResponse(FRONTEND / "index.html")
@@ -63,8 +70,7 @@ async def turn_timer(room_code, turn_id):
     await manager.broadcast(room_code, build_state(room))
 
 rooms = {}
-prompt_words = load_word("words.txt")
-valid_words = load_word("words_alpha.txt")
+
 
 
 #This is a class to manage Websocket connections for each room.
