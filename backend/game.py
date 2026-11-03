@@ -1,15 +1,24 @@
 import random
+MAX_LIVES = 3
 
 class Player:
-   
-    def __init__(self, name, player_id,):
-        self.name = name
-        self.id = player_id
-        self.is_alive = True
-        self.left = False
 
-    def eliminate(self):
-        self.is_alive = False
+       def __init__(self, name, player_id):
+           self.name = name
+           self.id = player_id
+           self.is_alive = True
+           self.left = False
+           self.lives = MAX_LIVES
+
+       def lose_life(self):
+           self.lives -= 1
+           if self.lives <= 0:
+               self.lives = 0
+               self.is_alive = False
+
+       def eliminate(self):          # used when a player leaves
+           self.lives = 0
+           self.is_alive = False
 
 
 class Room:
@@ -73,13 +82,15 @@ class Room:
        if reason is None:
            self.used_words.add(word)
        else:
-           player.eliminate()
+           player.lose_life()
        self.next_turn()
-       return {"player": player.name, "word": word, "ok": reason is None, "reason": reason}
+       return {"player": player.name, "word": word, "ok": reason is None,
+               "reason": reason, "lives": player.lives, "out": not player.is_alive}
 
     def reset(self):
        for p in self.players.values():
-           p.is_alive = True
+        p.is_alive = True
+        p.lives = MAX_LIVES
        self.is_started = False
        self.is_over = False
        self.current_turn = None
