@@ -19,8 +19,6 @@ FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 #absoulute path to the directory containing this file. for deployment, this will be the path to the backend directory on the server
 BASE = Path(__file__).resolve().parent
 
-print(BASE, (BASE / "words.txt").exists(), (BASE / "words_alpha.txt").exists())
-
 prompt_words = load_word(BASE /"words.txt")
 valid_words = load_word(BASE / "words_alpha.txt")
 @app.get("/")
@@ -30,7 +28,7 @@ def home():
 app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 
 #this is the time limit for each player's turn in seconds
-TURN_SECONDS = 30
+TURN_SECONDS = 10
 timers = {}      # room_code -> the running timer task
 deadlines = {}   # room_code -> when the current turn runs out
 
