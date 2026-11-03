@@ -16,9 +16,9 @@ A real-time multiplayer word game. Create a room, share the code, and outlast ev
 
 - [x] Player and Room models (join, turn order, elimination)
 - [x] Create/join rooms via code
-- [ ] Turn timer (~10 seconds)
-- [ ] Real-time gameplay between players
-- [ ] Simple, clean frontend
+- [x] Turn timer (~10 seconds)
+- [x] Real-time gameplay between players
+- [x] Simple, clean frontend
 - [ ] Live deployment
 
 ## Tech Stack
