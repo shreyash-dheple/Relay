@@ -1,6 +1,9 @@
 from game import Player, Room , load_word
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from pathlib import Path
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 import random
 import string
@@ -9,6 +12,15 @@ import asyncio
 import time
 
 app = FastAPI()
+
+# This is the path to the frontend directory, which contains the HTML, CSS, and JavaScript files for the game
+FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
+
+@app.get("/")
+def home():
+    return FileResponse(FRONTEND / "index.html")
+
+app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 
 #this is the time limit for each player's turn in seconds
 TURN_SECONDS = 30
