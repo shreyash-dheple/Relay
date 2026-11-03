@@ -1,5 +1,5 @@
 # Relay Word Game Backend
-from game import Player, Room , load_word
+from game import Player, Room , load_word, MAX_LIVES
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from pathlib import Path
@@ -29,7 +29,7 @@ def home():
 app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 
 #this is the time limit for each player's turn in seconds
-TURN_SECONDS = 10
+TURN_SECONDS = 15
 timers = {}      # room_code -> the running timer task
 deadlines = {}   # room_code -> when the current turn runs out
 
@@ -95,9 +95,9 @@ class ConnectionManager:
 #funnction to build the state of the room to send to frontend. 
 def build_state(room):
     players = [
-        {"name": p.name, "is_alive": p.is_alive}
-        for p in room.players.values()
-    ]
+       {"name": p.name, "is_alive": p.is_alive, "lives": p.lives}
+       for p in room.players.values()
+   ]
     current = None
     if room.current_turn is not None:
         current = room.players[room.current_turn].name
@@ -123,6 +123,7 @@ def build_state(room):
         "winner": winner,
         "seconds_left": seconds_left,                    
         "host": host,
+        "max_lives": MAX_LIVES,
         "events": room.events[-8:],                  #only send the last 8 events to the frontend to avoid sending too much data
     }
 
@@ -145,6 +146,9 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, player_id: st
         while True:
             data = await websocket.receive_json()
             msg_type = data.get("type")
+            if msg_type == "ping":
+                await websocket.send_json({"type": "pong", "t": data.get("t")})
+                continue
 
             if msg_type == "start":
                 is_host = player_id == next(iter(room.players))
