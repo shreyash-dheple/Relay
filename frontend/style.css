@@ -1,0 +1,35 @@
+:root {
+    --felt: #357c41; --felt-deep: #153829; --line: #366e34;
+    --tile: #f4ecd6; --ink: #2b2a26; --chalk: #eef3ec; --muted: #a9c2b4;
+    --coral: #ff6b57; --gold: #f2c14e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--felt); color: var(--chalk);
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 460px; margin: 0 auto; padding: 28px 18px 48px; }
+  h1 { font-family: Georgia, "Times New Roman", serif; font-size: 44px; margin: 0; letter-spacing: -1px; }
+  .muted { color: var(--muted); }
+  .hidden { display: none; }
+  input, button { font: inherit; width: 100%; margin-top: 10px; padding: 12px 14px; border-radius: 10px; }
+  input { background: var(--felt-deep); border: 1px solid var(--line); color: var(--chalk); }
+  button { border: none; background: var(--gold); color: var(--ink); font-weight: 700; cursor: pointer; }
+  button.ghost { background: none; border: 1px solid var(--gold); color: var(--gold); }
+  button:disabled, input:disabled { opacity: .45; cursor: not-allowed; }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .error { color: var(--coral); min-height: 1.3em; margin-top: 10px; }
+  #join-view { margin-top: 28px; }
+  #join-view p { text-align: center; margin: 18px 0 0; }
+  #players { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { padding: 6px 14px; border-radius: 999px; background: var(--felt-deep); border: 1px solid var(--line); }
+  .chip.turn { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+  .chip.dead { opacity: .45; text-decoration: line-through; }
+  #table { margin-top: 28px; text-align: center; }
+  #status { color: var(--muted); min-height: 1.4em; }
+  #letters { display: flex; justify-content: center; gap: 10px; margin: 18px 0; min-height: 72px; }
+  .tile { width: 64px; height: 72px; display: grid; place-items: center; background: var(--tile); color: var(--ink);
+          border-radius: 8px; box-shadow: 0 4px 0 #cdbf98; font: 700 40px Georgia, serif; text-transform: uppercase; }
+  #bar { height: 8px; border-radius: 4px; background: var(--felt-deep); overflow: hidden; }
+  #bar div { height: 100%; width: 0; background: var(--gold); }
+  #bar.low div { background: var(--coral); }
+  #timer { font-size: 26px; margin: 8px 0 4px; min-height: 1.3em; }
+  #banner { font: 700 30px Georgia, serif; color: var(--gold); margin-bottom: 8px; }
