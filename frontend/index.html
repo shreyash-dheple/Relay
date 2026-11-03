@@ -9,7 +9,7 @@
 <body>
 <main>
   <h1>Relay</h1>
-  <p class="muted">Type a word that starts with the letters before time runs out. Miss, and you are out.</p>
+      <p class="muted">Type a word that starts with the letters before time runs out. Miss and you lose a heart. Lose all three and you're out.</p>
 
  <section id="join-view">
   <div class="panel">
@@ -31,7 +31,7 @@
 </section>
 
   <section id="game-view" class="hidden">
-    <div class="muted" style="margin-top:20px">Room code: <strong id="room-code" style="color:var(--chalk)"></strong></div>
+    <div class="muted" style="margin-top:20px">Room code: <strong id="room-code" style="color:var(--chalk)"></strong> <span id="ping" style="margin-left:10px"></span></div>
     <div id="players"></div>
 
     <div id="table">
@@ -40,13 +40,19 @@
       <div id="letters"></div>
       <div id="bar"><div></div></div>
       <div id="timer"></div>
-      <div id="feed"></div>
       <button id="start-btn" class="hidden">Start game</button>
       <input id="word" placeholder="Your word" autocomplete="off" disabled>
       <button id="submit-btn" disabled>Play word</button>
       <button id="restart-btn" class="hidden">Play again</button>
       <button id="home-btn" class="ghost">Home</button>
     </div>
+        </div>   <!-- end of #table -->
+
+      <aside id="feed-box">
+      <h3>Game log</h3>
+      <div id="feed"></div>
+    </aside>
+  </section>
   </section>
 </main>
 
